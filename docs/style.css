@@ -1,0 +1,91 @@
+body {
+  font-size: 14px;
+  color: rgb(50, 50, 93);
+  background: #FCFCFC;
+}
+
+img {
+  width: 100%;
+  height: auto;
+  box-shadow: 0 4px 6px rgba(50,50,93,.11), 0 1px 3px rgba(0,0,0,.08)
+}
+
+.nav {
+  display: flex;
+  padding: 10px 0;
+  background: #FFF;
+  box-shadow: 0 1px 2px 0 rgba(0,0,0,.06);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo > img {
+  height: 40px;
+  width: auto;
+}
+
+.logo > span {
+  display: inline-block;
+  margin-left: 1.4rem;
+  font-size: 16px;
+  font-weight: 700;
+  height: 40px;
+  line-height: 40px;
+}
+
+.header-wrapper {
+  height: 300px;
+  margin: 70px 0;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.header p {
+  font-size: 1.4rem;
+  font-weight: 300;
+  padding: .75rem 0;
+}
+
+.help-title {
+  width: 100%;
+  padding-top: 1rem;
+  text-align: center;
+  text-decoration: underline;
+}
+
+.help {
+  box-sizing: border-box;
+  height: auto;
+  min-height: 350px;
+  padding: 1rem 0;
+}
+
+.help > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 3rem;
+  padding: 1rem 0;
+  border-top: 1px solid rgba(0,0,0,.1);
+}
+
+footer > p {
+  margin: 0;
+  height: 1em;
+  line-height: 1em;
+}

@@ -1,0 +1,34 @@
+{
+  "name": "pollit",
+  "version": "0.1.0",
+  "description": "投票机器人 for BearyChat",
+  "main": "index.js",
+  "author": "Hopsken<shaowei5@icloud.com>",
+  "license": "MIT",
+  "repository": {
+    "url": "",
+    "type": "git"
+  },
+  "scripts": {
+    "lint": "eslint ./src --fix",
+    "build": "./node_modules/.bin/babel ./src --out-dir ./lib",
+    "dev": "npm run build && NODE_ENV=dev node ./lib/index.js",
+    "prod": "npm run build && NODE_ENV=prod pm2 start ./lib/index.js --watch"
+  },
+  "dependencies": {
+    "babel-polyfill": "^6.26.0",
+    "bearychat": "^1.2.0",
+    "bearychat-rtm-client": "^0.8.0",
+    "lodash": "^4.17.10",
+    "mysql2": "^1.6.1",
+    "sequelize": "^4.41.0",
+    "ws": "^3.3.3"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.1.2",
+    "@babel/core": "^7.1.2",
+    "@babel/preset-env": "^7.1.0",
+    "eslint": "^4.19.1",
+    "eslint-plugin-import": "^2.14.0"
+  }
+}
