@@ -1,5 +1,4 @@
 import {
-  getPollTemplate,
   INTRODUCTION_TEMPLATE,
 } from '../../templates'
 import {
@@ -8,12 +7,15 @@ import {
   updatePollById,
   createBulkChoices,
   getChoicesByPollId,
+  getStatsByPollId,
   createOrUpdateAnswer
 } from './sql'
 import {
+  formatPoll,
   formatChoices,
+  orderingChoice,
   getCurrentBotName,
-  getUserIdsWithIndexByPollId
+  formatResultsAttachments,
 } from './utils'
 
 const commandHandlers = {
@@ -50,10 +52,10 @@ const commandHandlers = {
       })
       .then(() => createBulkChoices(choices, pollId))
       .then(() => reply({
-        text: getPollTemplate({
+        text: formatPoll({
           pollId,
           title,
-          choices: formatChoices(choices),
+          choices: choices.map((one, index) => orderingChoice(one, index + 1)).join('\n'),
           tips: `成功生成投票，输入 \`publish ${pollId} "讨论组名"\` 来发布到讨论组吧~`
         })
       }))
@@ -103,19 +105,22 @@ const commandHandlers = {
     reply({
       vchannel_id: targetChannel.vchannel_id,
       attachments: [],
-      text: getPollTemplate({
+      text: formatPoll({
         pollId,
         title: currentPoll['text'],
-        choices:  formatChoices(choices.map(one => one.text)),
+        choices:  choices.map((one, index) => orderingChoice(one.text, index + 1)).join('\n'),
         tips: `快来私聊 ${botName} \`vote ${pollId} 选项序号\` 投票吧~ `
       })
     })
-      .then(message => updatePollById(pollId, { messageKey: message.key, channelId: message.vchannel_id }))
+      .then(message =>
+        updatePollById(pollId, { messageKey: message.key, channelId: message.vchannel_id })
+      )
       .then(() =>
         reply({
           vchannel_id: message.vchannel_id,
           text: `成功发布投票 **No.${pollId} ${currentPoll['text']}** 到 **${channelName}**，快去通知大家参与投票吧~`
-        }))
+        })
+      )
   },
 
   // 用户投票
@@ -155,21 +160,50 @@ const commandHandlers = {
       > 如果想要更改选择，再次执行 \`vote ${currentPoll.id} 新选择\` 即可。`
       }))
       .then(async () => {
-        const choicesTitle = availableChoices.map(one => one.text)
-        const userIdsByIndex = await getUserIdsWithIndexByPollId(pollId)
+        const { detail } = await getStatsByPollId(pollId)
         const botName = await getCurrentBotName(http)
 
         return http.message.update_text({
           vchannel_id: currentPoll.channelId,
           message_key: currentPoll.messageKey,
-          text: getPollTemplate({
+          text: formatPoll({
             pollId,
             title: currentPoll.text,
-            choices: formatChoices(choicesTitle, userIdsByIndex),
+            choices: formatChoices(detail),
             tips: `快来私聊 ${botName} \`vote ${pollId} 选项序号\` 投票吧~ `
           })
         })
       })
+  },
+
+  async result(options, reply) {
+    const [pollId] = options
+    const message = this
+
+    if (!pollId) {
+      reply({
+        text: '请输入 `result 编号` 查看投票结果😉'
+      })
+
+      return
+    }
+
+    const stats = await getStatsByPollId(pollId)
+    const poll = await getPollById(pollId, ['text', 'creatorId'])
+
+    // 判断是否为本人发起的投票
+    if (!poll || message.uid !== poll.creatorId) {
+      reply({
+        text: '只能查看自己发起的投票的结果哦😉'
+      })
+
+      return
+    }
+
+    reply({
+      text: `**No.${pollId} ${poll['text']}**`,
+      attachments: formatResultsAttachments(stats)
+    })
   }
 
 }

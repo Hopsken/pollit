@@ -15,7 +15,7 @@ export const sequelize = new Sequelize(
     logging: process.env.NODE_ENV === 'dev'
   }
 )
-sequelize.sync()
+process.env.NODE_ENV === 'dev' && sequelize.sync()
 
 export const http = new HTTPClient(HUBOT_TOKEN)
 

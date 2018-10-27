@@ -1,9 +1,7 @@
-import { getStatsByPollId } from './sql'
-
-const choiceEmojis = {
-  0: '0️⃣', 1: '1️⃣', 2: '2️⃣', 3: '3️⃣', 4: '4️⃣', 5: '5️⃣',
-  6: '6️⃣', 7: '7️⃣', 8: '8️⃣', 9: '9️⃣', 10: '🔟', other: '#️⃣'
-}
+import {
+  getPollTemplate,
+  // getStatsTemplate,
+} from '../../templates'
 
 function parsePollCmd(text) {
   try {
@@ -50,44 +48,105 @@ export const parseCmd = text => {
 }
 
 
-export const formatChoices = (choices, names) => {
+const choiceEmojis = {
+  0: '0️⃣', 1: '1️⃣', 2: '2️⃣', 3: '3️⃣', 4: '4️⃣', 5: '5️⃣',
+  6: '6️⃣', 7: '7️⃣', 8: '8️⃣', 9: '9️⃣', 10: '🔟', other: '#️⃣'
+}
+
+export const orderingChoice = (text, index) => {
+  return `${ index <= 10 ? choiceEmojis[index] : index} ${text}`
+}
+
+export const formatChoices = detail => {
   let res = ''
-  names = names || [];
 
-  (choices || []).forEach((one, i) => {
-    const index = i + 1
-    res += `${ index <= 10 ? choiceEmojis[index] : index } ${one} \n`
-    if (names[index] && names[index].length) {
-      res += `${names[index].length} 人：` + names[index].map(name => `@<=${name}=>`).join(' ') + '\n'
+  ;(detail || []).forEach((option, index) => {
+    const { text, users } = option
+
+    res += orderingChoice(text, index + 1) + '\n'
+
+    if (users && users.length) {
+      res += `${users.length} 人：` + users.map(userId => `@<=${userId}=>`).join(' ') + '\n'
     }
   })
 
-  // 移除最后一个换行
-  return res.slice(0, -1)
+  return res.trim()
 }
-
-
-export const getUserIdsWithIndexByPollId = async (pollId) => {
-  const answers = await getStatsByPollId(pollId)
-  const userIdsByIndex = []
-
-  answers.forEach(answer => {
-    let ids = userIdsByIndex[answer.index]
-    if (!ids) {
-      ids = [answer.userId]
-    } else {
-      ids.push(answer.userId)
-    }
-
-    userIdsByIndex[answer.index] = ids
-  })
-
-  return userIdsByIndex
-}
-
 
 export const getCurrentBotName = async (http) => {
   const currentBot = await http.user.me()
 
-  return currentBot.full_name || currentBot.name
+  return `@<=${currentBot.id}=>`
 }
+
+/*
+ * 格式化投票详情
+*/
+export const formatPoll = getPollTemplate
+
+/*
+ * 格式化投票结果
+*/
+export const formatResultsAttachments = stats => {
+  const { detail, total } = stats
+  const colors = ['#598AD6', '#36BD64', '#F23C41', '#F4BF70']
+
+  const attachments = detail.map((option, index) => {
+    const { text, users } = option
+    let statsText = ''
+
+    statsText += orderingChoice(text, index + 1) + '\n'
+
+    if (Array.isArray(users)) {
+      const percent = (users.length / total) * 100
+      const progress = '◻️'.repeat(Math.round(percent/10))
+      const numberOfPeople = users.length ? `(${users.length})` : ''
+
+      statsText += `${progress} ${percent}% ${numberOfPeople} \n`
+      statsText += users.map(userId => `@<=${userId}=>`).join(' ') + '\n'
+    }
+
+    return {
+      color: colors[index % 4],
+      text: statsText.trim()
+    }
+  })
+
+  attachments.push({
+    color: '#32325D',
+    text: `总票数：**${total}**`
+  })
+
+  return attachments
+}
+
+// export const formatStats = ({
+//   pollId,
+//   title,
+//   stats
+// } = {}) => {
+//   const { detail, total } = stats
+//   const colors = ['#598AD6', '#36BD64', '#F23C41', '#F4BF70']
+
+//   let statsText = ''
+//   ;(detail || []).forEach((option, index) => {
+//     const { text, users } = option
+
+//     statsText += orderingChoice(text, index + 1) + '\n'
+
+//     if (Array.isArray(users)) {
+//       const percent = (users.length / total) * 100
+//       const progress = '◻️'.repeat(Math.round(percent/10))
+//       const numberOfPeople = users.length ? `(${users.length})` : ''
+
+//       statsText += `${progress} ${percent}% ${numberOfPeople} \n`
+//       statsText += users.map(userId => `@<=${userId}=>`).join(' ') + '\n'
+//     }
+//   })
+
+//   return getStatsTemplate({
+//     title,
+//     number: pollId,
+//     stats: statsText.trim(),
+//   })
+// }

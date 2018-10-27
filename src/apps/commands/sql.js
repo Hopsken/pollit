@@ -115,14 +115,34 @@ export const getChoicesByPollId = async (pollId, keys = ['text']) => {
 }
 
 /*
- * 查询指定 pollId 的投票情况
+  * 查询指定 pollId 的投票情况
+  * result: Object<detail: Array, total: number>
 */
-export const getStatsByPollId = pollId => {
-  return sequelize.query('SELECT answers.userId, choices.index FROM answers, choices \
+export const getStatsByPollId = async pollId => {
+
+  const answers = await sequelize.query('SELECT answers.userId, choices.index, choices.text FROM answers, choices \
    WHERE answers.choiceId = choices.id AND answers.pollId = :pollId',
   {
     replacements: { pollId },
     type: sequelize.QueryTypes.SELECT
   }
   )
+  const choices = await getChoicesByPollId(pollId)
+  const formated = [] // Array<{ text: string, users: Array }>
+
+  choices.forEach(choice => {
+    formated.push({
+      text: choice.text,
+      users: []
+    })
+  })
+
+  answers.forEach(answer => {
+    formated[answer.index - 1]['users'].push(answer.userId)
+  })
+
+  return {
+    detail: formated,
+    total: answers.length
+  }
 }
