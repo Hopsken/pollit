@@ -34,6 +34,11 @@ export const parseCmd = text => {
 
   try {
     if (cmd === 'poll') {
+
+      if (rest[1] === '-a') {
+        cmd = 'pollAnonymous'
+      }
+
       rest = parsePollCmd(text)
     }
 

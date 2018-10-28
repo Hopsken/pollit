@@ -61,6 +61,10 @@ const commandHandlers = {
       }))
   },
 
+  async pollAnony(options, reply, http) {
+
+  },
+
   // 发布投票
   async publish(options, reply, http) {
     const message = this
