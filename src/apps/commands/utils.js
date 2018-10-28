@@ -62,7 +62,7 @@ export const orderingChoice = (text, index) => {
   return `${ index <= 10 ? choiceEmojis[index] : index} ${text}`
 }
 
-export const formatChoices = (detail) => {
+export const formatChoices = (detail, anonymous) => {
   let res = ''
 
   ;(detail || []).forEach((option, index) => {
@@ -71,7 +71,11 @@ export const formatChoices = (detail) => {
     res += orderingChoice(text, index + 1) + '\n'
 
     if (users && users.length) {
-      res += `${users.length} 人：` + users.map(userId => `@<=${userId}=>`).join(' ') + '\n'
+      if (anonymous) {
+        res += `${users.length} 人\n`
+      } else {
+        res += `${users.length} 人：` + users.map(userId => `@<=${userId}=>`).join(' ') + '\n'
+      }
     }
   })
 

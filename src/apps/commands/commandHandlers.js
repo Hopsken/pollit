@@ -64,7 +64,7 @@ const commandHandlers = {
           pollId,
           title,
           choices: choices.map((one, index) => orderingChoice(one, index + 1)).join('\n'),
-          tips: `成功生成投票，输入 \`publish ${pollId} "讨论组名"\` 来发布到讨论组吧~`
+          tips: `成功生成${anonymous ? '匿名' : ''}投票，输入 \`publish ${pollId} "讨论组名"\` 来发布到讨论组吧~`
         })
       }))
       .catch(() => reply({
@@ -120,31 +120,32 @@ const commandHandlers = {
 
     reply({
       vchannel_id: targetChannel.vchannel_id,
-      attachments: [],
+      text: `@<=${currentPoll.creatorId}=> 发起了新投票
+      > 快来私聊 ${botName} \`vote ${pollId} 选项序号\` 投上你的一票吧~`
+    })
+    .then(() => reply({
+      vchannel_id: targetChannel.vchannel_id,
       text: formatPoll({
         pollId,
         title: currentPoll.text,
         choices:  choices.map((one, index) => orderingChoice(one.text, index + 1)).join('\n'),
-        tips: `快来私聊 ${botName} \`vote ${pollId} 选项序号\` 投票吧~ `
-          .concat(
-            currentPoll.anonymous
-              ? '\n🕶 本次投票为**匿名投票**，你的名字将不会出现在结果中。'
-              : ''
-            )
+        tips: currentPoll.anonymous
+          ? '\n🕶 本次投票为**匿名投票**，你的名字将不会出现在结果中。'
+          : ''
       })
-    })
-      .then(message =>
-        updatePollById(pollId, { messageKey: message.key, channelId: message.vchannel_id })
-      )
-      .then(() =>
-        reply({
-          vchannel_id: message.vchannel_id,
-          text: `成功发布投票 **No.${pollId} ${currentPoll['text']}** 到 **${channelName}**，快去通知大家参与投票吧~`
-        })
-      )
-      .catch(() => reply({
-        text: '抱歉，似乎出了点问题😔'
-      }))
+    }))
+    .then(message =>
+      updatePollById(pollId, { messageKey: message.key, channelId: message.vchannel_id })
+    )
+    .then(() =>
+      reply({
+        vchannel_id: message.vchannel_id,
+        text: `成功发布投票 **No.${pollId} ${currentPoll['text']}** 到 **${channelName}**，快去通知大家参与投票吧~`
+      })
+    )
+    .catch(() => reply({
+      text: '抱歉，似乎出了点问题😔'
+    }))
   },
 
   // 用户投票
@@ -197,10 +198,6 @@ const commandHandlers = {
         return Promise.reject('Already voted.')
       })
       .then(async () => {
-        if (currentPoll.anonymous) {
-          return new Promise()
-        }
-
         const { detail } = await getStatsByPollId(pollId)
         const botName = await getCurrentBotName(http)
 
@@ -210,8 +207,10 @@ const commandHandlers = {
           text: formatPoll({
             pollId,
             title: currentPoll.text,
-            choices: formatChoices(detail),
-            tips: `快来私聊 ${botName} \`vote ${pollId} 选项序号\` 投票吧~ `
+            choices: formatChoices(detail, currentPoll.anonymous),
+            tips: currentPoll.anonymous
+              ? '\n🕶 本次投票为**匿名投票**，你的名字将不会出现在结果中。'
+              : ''
           })
         })
       })
