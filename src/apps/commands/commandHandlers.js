@@ -60,8 +60,12 @@ const commandHandlers = {
           tips: `成功生成投票，输入 \`publish ${pollId} "讨论组名"\` 来发布到讨论组吧~`
         })
       }))
+      .catch(() => reply({
+        text: '抱歉，似乎出了点问题😔'
+      }))
   },
 
+  // 创建匿名投票
   pollAnonymous(options, reply, http) {
     commandHandlers['poll'].call(this, options, reply, http, true)
   },
@@ -71,7 +75,7 @@ const commandHandlers = {
     const message = this
     const [pollId, channelName] = options
 
-    const currentPoll = await getPollById(pollId, ['text', 'creatorId', 'messageKey', 'anonymous'])
+    const currentPoll = await getPollById(pollId).catch(() => null)
 
     // 未找到投票
     if (currentPoll == null) {
@@ -131,6 +135,9 @@ const commandHandlers = {
           text: `成功发布投票 **No.${pollId} ${currentPoll['text']}** 到 **${channelName}**，快去通知大家参与投票吧~`
         })
       )
+      .catch(() => reply({
+        text: '抱歉，似乎出了点问题😔'
+      }))
   },
 
   // 用户投票
@@ -138,13 +145,22 @@ const commandHandlers = {
     const message = this
     const [pollId, choiceIndex] = options
 
-    const currentPoll = await getPollById(pollId, ['messageKey', 'teamId', 'text', 'id', 'channelId', 'anonymous'])
+    const currentPoll = await getPollById(pollId).catch(() => null)
     const currentUser = await http.user.info({ user_id: message.uid })
 
-    if (!currentPoll || currentPoll.messageKey == null ||currentPoll.teamId !== currentUser.team_id) {
+    if (!currentPoll || currentPoll.messageKey == null || currentPoll.teamId !== currentUser.team_id) {
       reply({
         text: '似乎没有这个投票哎，也许是输错了编号？'
       })
+
+      return
+    }
+
+    if (currentPoll.closed) {
+      reply({
+        text: '该投票已经被关闭啦，似乎来迟了一步呢'
+      })
+
       return
     }
 
@@ -192,7 +208,9 @@ const commandHandlers = {
           })
         })
       })
-      .catch(() => null)
+      .catch(() => reply({
+        text: '抱歉，似乎出了点问题😔'
+      }))
   },
 
   async result(options, reply) {
@@ -208,7 +226,7 @@ const commandHandlers = {
     }
 
     const stats = await getStatsByPollId(pollId)
-    const poll = await getPollById(pollId, ['text', 'creatorId', 'anonymous'])
+    const poll = await getPollById(pollId).catch(() => null)
 
     // 判断是否为本人发起的投票
     if (!poll || message.uid !== poll.creatorId) {
@@ -223,6 +241,41 @@ const commandHandlers = {
       text: `**No.${pollId} ${poll.text}**`,
       attachments: formatResultsAttachments(stats, poll.anonymous)
     })
+    .catch(() => reply({
+      text: '抱歉，似乎出了点问题😔'
+    }))
+  },
+
+  async close(options, reply) {
+    const message = this
+    const [pollId] = options
+
+    const currentPoll = await getPollById(pollId).catch(() => null)
+
+    // 检测是否为本人发起的投票
+    if (!currentPoll || currentPoll.creatorId !== message.uid) {
+      reply({
+        text: '只能关闭自己发起的投票哦😘'
+      })
+      return
+    }
+
+    // 检测是否已经关闭
+    if (currentPoll.closed) {
+      reply({
+        text: '投票已经被关闭啦~'
+      })
+
+      return
+    }
+
+    updatePollById(pollId, {closed: true})
+    .then(() => reply({
+      text: `成功关闭投票 **No.${pollId} ${currentPoll.text}**，输入\`result ${pollId}\`查看结果吧~`
+    }))
+    .catch(() => reply({
+      text: '抱歉，似乎出了点问题😔'
+    }))
   }
 
 }

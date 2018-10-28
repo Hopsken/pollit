@@ -21,6 +21,11 @@ export const createPoll = ({
   * 根据 ID 更新投票
 */
 export const updatePollById = (pollId, attributes) => {
+
+  if (!Number.isSafeInteger(pollId - 0)) {
+    return Promise.reject('Invalid pollId')
+  }
+
   return db.Poll.update(
     attributes,
     { where: { id: pollId } }
@@ -29,8 +34,14 @@ export const updatePollById = (pollId, attributes) => {
 
 /*
   * 根据 ID 查找投票
+  * params: pollId, keys: Array<String>
 */
-export const getPollById = async (pollId, keys = ['text']) => {
+export const getPollById = async (pollId, keys) => {
+
+  if (!Number.isSafeInteger(pollId - 0)) {
+    return Promise.reject('Invalid pollId')
+  }
+
   const poll = await db.Poll.findOne({
     attributes: keys,
     where: {
@@ -47,7 +58,6 @@ export const getPollById = async (pollId, keys = ['text']) => {
   }
   )
 }
-
 
 /*
   * 创建用户 Answer
@@ -92,7 +102,12 @@ export const createBulkChoices = (
 /*
   * 根据 pollId 查找选项
 */
-export const getChoicesByPollId = async (pollId, keys = ['text']) => {
+export const getChoicesByPollId = async (pollId, keys) => {
+
+  if (!Number.isSafeInteger(pollId - 0)) {
+    return Promise.reject('Invalid pollId')
+  }
+
   const choices = await db.Choice.findAll({
     attributes: keys,
     where: {
@@ -119,6 +134,10 @@ export const getChoicesByPollId = async (pollId, keys = ['text']) => {
   * result: Object<detail: Array, total: number>
 */
 export const getStatsByPollId = async pollId => {
+
+  if (!Number.isSafeInteger(pollId - 0)) {
+    return Promise.reject('Invalid pollId')
+  }
 
   const answers = await sequelize.query('SELECT answers.userId, choices.index, choices.text FROM answers, choices \
    WHERE answers.choiceId = choices.id AND answers.pollId = :pollId',

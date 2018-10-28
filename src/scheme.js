@@ -41,6 +41,12 @@ export const Poll = sequelize.define('poll', {
     allowNull: false
   },
 
+  closed: {
+    type: Sequelize.BOOLEAN,
+    defaultValue: false,
+    allowNull: false
+  }
+
 }, {
   timestamps: true
 })
