@@ -48,9 +48,9 @@ export const getPollById = async (pollId, keys = ['text']) => {
 
 
 /*
-  * 创建或更新用户 Answer
+  * 创建用户 Answer
 */
-export const createOrUpdateAnswer = ({
+export const createAnswer = ({
   pollId, userId, choiceId, username
 } = {}) => {
   return db.Answer.findOne({
@@ -61,9 +61,7 @@ export const createOrUpdateAnswer = ({
   })
     .then(ans => {
       if (ans) {
-        return ans.update({
-          choiceId, username
-        })
+        throw new Error('Alreay exist.')
       } else {
         return db.Answer.create({
           pollId,

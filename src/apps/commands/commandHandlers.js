@@ -4,11 +4,11 @@ import {
 import {
   createPoll,
   getPollById,
+  createAnswer,
   updatePollById,
   createBulkChoices,
   getChoicesByPollId,
   getStatsByPollId,
-  createOrUpdateAnswer
 } from './sql'
 import {
   formatPoll,
@@ -148,17 +148,23 @@ const commandHandlers = {
       return
     }
 
-    createOrUpdateAnswer({
+    const hasVoted =
+
+    createAnswer({
       pollId,
       userId: currentUser.id,
       username: currentUser.name,
       choiceId: userChoice['id']
     })
       .then(() => reply({
-        text: `成功投票：**No.${currentPoll.id} ${currentPoll.text}**，你的选择为：**${userChoice['text']}**。
-
-      > 如果想要更改选择，再次执行 \`vote ${currentPoll.id} 新选择\` 即可。`
+        text: `成功投票：**No.${currentPoll.id} ${currentPoll.text}**，你的选择为：**${userChoice['text']}**。`
       }))
+      .catch(() => {
+        reply({
+          text: '已经投过票啦~'
+        })
+        return Promise.reject('Already voted.')
+      })
       .then(async () => {
         const { detail } = await getStatsByPollId(pollId)
         const botName = await getCurrentBotName(http)
@@ -174,6 +180,7 @@ const commandHandlers = {
           })
         })
       })
+      .catch(() => null)
   },
 
   async result(options, reply) {
