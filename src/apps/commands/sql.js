@@ -7,12 +7,14 @@ import { sequelize } from '../../client'
 export const createPoll = ({
   teamId,
   creatorId,
-  text
+  text,
+  anonymous
 } = {}) =>
   db.Poll.create({
     teamId,
     creatorId,
-    text
+    text,
+    anonymous
   })
 
 /*

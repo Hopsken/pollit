@@ -35,7 +35,7 @@ export const parseCmd = text => {
   try {
     if (cmd === 'poll') {
 
-      if (rest[1] === '-a') {
+      if (rest[0] === '-a') {
         cmd = 'pollAnonymous'
       }
 
@@ -62,7 +62,7 @@ export const orderingChoice = (text, index) => {
   return `${ index <= 10 ? choiceEmojis[index] : index} ${text}`
 }
 
-export const formatChoices = detail => {
+export const formatChoices = (detail) => {
   let res = ''
 
   ;(detail || []).forEach((option, index) => {
@@ -92,7 +92,7 @@ export const formatPoll = getPollTemplate
 /*
  * 格式化投票结果
 */
-export const formatResultsAttachments = stats => {
+export const formatResultsAttachments = (stats, anonymous = false) => {
   const { detail, total } = stats
   const colors = ['#598AD6', '#36BD64', '#F23C41', '#F4BF70']
 
@@ -103,12 +103,15 @@ export const formatResultsAttachments = stats => {
     statsText += orderingChoice(text, index + 1) + '\n'
 
     if (Array.isArray(users)) {
-      const percent = (users.length / total) * 100
+      const percent = total !== 0 ? (users.length / total) * 100 : 0
+
       const progress = '◻️'.repeat(Math.round(percent/10))
       const numberOfPeople = users.length ? `(${users.length})` : ''
 
       statsText += `${progress} ${percent}% ${numberOfPeople} \n`
-      statsText += users.map(userId => `@<=${userId}=>`).join(' ') + '\n'
+      if (!anonymous) {
+        statsText += users.map(userId => `@<=${userId}=>`).join(' ') + '\n'
+      }
     }
 
     return {

@@ -35,7 +35,7 @@ const commandHandlers = {
   },
 
   // 发起投票
-  poll(options, reply, http) {
+  poll(options, reply, http, anonymous = false) {
     const message = this
     const [title, ...choices] = options
 
@@ -45,7 +45,8 @@ const commandHandlers = {
       .then(info => createPoll({
         teamId: info.id,
         creatorId: message.uid,
-        text: title
+        text: title,
+        anonymous,
       }))
       .then(poll => {
         pollId = poll.get({ plain: true })['id']
@@ -61,8 +62,8 @@ const commandHandlers = {
       }))
   },
 
-  async pollAnony(options, reply, http) {
-
+  pollAnonymous(options, reply, http) {
+    commandHandlers['poll'].call(this, options, reply, http, true)
   },
 
   // 发布投票
@@ -70,7 +71,7 @@ const commandHandlers = {
     const message = this
     const [pollId, channelName] = options
 
-    const currentPoll = await getPollById(pollId, ['text', 'creatorId', 'messageKey'])
+    const currentPoll = await getPollById(pollId, ['text', 'creatorId', 'messageKey', 'anonymous'])
 
     // 未找到投票
     if (currentPoll == null) {
@@ -111,9 +112,14 @@ const commandHandlers = {
       attachments: [],
       text: formatPoll({
         pollId,
-        title: currentPoll['text'],
+        title: currentPoll.text,
         choices:  choices.map((one, index) => orderingChoice(one.text, index + 1)).join('\n'),
         tips: `快来私聊 ${botName} \`vote ${pollId} 选项序号\` 投票吧~ `
+          .concat(
+            currentPoll.anonymous
+              ? '\n🕶 本次投票为**匿名投票**，你的名字将不会出现在结果中。'
+              : ''
+            )
       })
     })
       .then(message =>
@@ -132,7 +138,7 @@ const commandHandlers = {
     const message = this
     const [pollId, choiceIndex] = options
 
-    const currentPoll = await getPollById(pollId, ['messageKey', 'teamId', 'text', 'id', 'channelId'])
+    const currentPoll = await getPollById(pollId, ['messageKey', 'teamId', 'text', 'id', 'channelId', 'anonymous'])
     const currentUser = await http.user.info({ user_id: message.uid })
 
     if (!currentPoll || currentPoll.messageKey == null ||currentPoll.teamId !== currentUser.team_id) {
@@ -152,8 +158,6 @@ const commandHandlers = {
       return
     }
 
-    const hasVoted =
-
     createAnswer({
       pollId,
       userId: currentUser.id,
@@ -170,6 +174,10 @@ const commandHandlers = {
         return Promise.reject('Already voted.')
       })
       .then(async () => {
+        if (currentPoll.anonymous) {
+          return new Promise()
+        }
+
         const { detail } = await getStatsByPollId(pollId)
         const botName = await getCurrentBotName(http)
 
@@ -200,7 +208,7 @@ const commandHandlers = {
     }
 
     const stats = await getStatsByPollId(pollId)
-    const poll = await getPollById(pollId, ['text', 'creatorId'])
+    const poll = await getPollById(pollId, ['text', 'creatorId', 'anonymous'])
 
     // 判断是否为本人发起的投票
     if (!poll || message.uid !== poll.creatorId) {
@@ -212,8 +220,8 @@ const commandHandlers = {
     }
 
     reply({
-      text: `**No.${pollId} ${poll['text']}**`,
-      attachments: formatResultsAttachments(stats)
+      text: `**No.${pollId} ${poll.text}**`,
+      attachments: formatResultsAttachments(stats, poll.anonymous)
     })
   }
 

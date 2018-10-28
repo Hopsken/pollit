@@ -21,6 +21,7 @@ export const commands = async clients => {
     }
 
     const handler = commandHandlers[cmd]
+
     if (typeof handler === 'function') {
       handler.call(message, options, reply, http)
     } else {

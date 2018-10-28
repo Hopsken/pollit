@@ -35,6 +35,12 @@ export const Poll = sequelize.define('poll', {
     allowNull: false
   },
 
+  anonymous: {
+    type: Sequelize.BOOLEAN,
+    defaultValue: false,
+    allowNull: false
+  },
+
 }, {
   timestamps: true
 })
