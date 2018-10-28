@@ -39,6 +39,13 @@ const commandHandlers = {
     const message = this
     const [title, ...choices] = options
 
+    if (!choices || choices.length === 0) {
+      reply({
+        text: '您似乎没有填写选项哎。如需帮助，请输入`help`'
+      })
+      return
+    }
+
     let pollId
 
     http.team.info()

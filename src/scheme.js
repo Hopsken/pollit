@@ -51,7 +51,6 @@ export const Poll = sequelize.define('poll', {
   timestamps: true
 })
 
-
 export const Answer = sequelize.define('answer', {
 
   id: {
@@ -110,3 +109,11 @@ export const Choice = sequelize.define('choice', {
 }, {
   timestamps: true
 })
+
+
+// 同步字段更新
+if (process.env.NODE_ENV === 'dev') {
+  Poll.sync({ alter: true })
+  Answer.sync({ alter: true })
+  Choice.sync({ alter: true })
+}
