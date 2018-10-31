@@ -36,17 +36,15 @@ export const updatePollById = (pollId, attributes) => {
   * 根据 ID 查找投票
   * params: pollId, keys: Array<String>
 */
-export const getPollById = async (pollId, keys) => {
+export const getPoll = async (conditions, keys) => {
 
-  if (!Number.isSafeInteger(pollId - 0)) {
+  if (conditions['id'] && !Number.isSafeInteger(conditions['id'] - 0)) {
     return Promise.reject('Invalid pollId')
   }
 
   const poll = await db.Poll.findOne({
     attributes: keys,
-    where: {
-      id: pollId
-    }
+    where: conditions
   })
 
   return new Promise((resolve, reject) => {

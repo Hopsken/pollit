@@ -1,6 +1,6 @@
 import { parseCmd } from './utils'
 import { INTRODUCTION_TEMPLATE } from '../../templates'
-import commandHandlers from './commandHandlers'
+import { personalCommandHandlers, channelCommandHandlers } from './commandHandlers'
 
 export const commands = async clients => {
   const { rtm, http, RTMClientEvents: Events } = clients
@@ -20,7 +20,7 @@ export const commands = async clients => {
       return
     }
 
-    const handler = commandHandlers[cmd]
+    const handler = personalCommandHandlers[cmd]
 
     if (typeof handler === 'function') {
       handler.call(message, options, reply, http)
@@ -37,9 +37,6 @@ export const commands = async clients => {
       return
     }
 
-    // eslint-disable-next-line
-    console.log(message.uid + ': ' + message.text)
-
     const reply = others =>
       http.message.create({
         vchannel_id: message.vchannel_id,
@@ -51,13 +48,33 @@ export const commands = async clients => {
     handleCommand(message, reply)
   }
 
+  function handleChannelMessage(message) {
+    if (message.uid === me.id) {
+      // prevent inifinite message loop
+      return
+    }
+
+    const reply = others =>
+      http.message.create({
+        vchannel_id: message.vchannel_id,
+        attachments: [],
+        text: 'Aha, gocha~',
+        ...others,
+      })
+
+    if (message['refer_key']) {
+      channelCommandHandlers['refer'].call(message, reply, http)
+    }
+    return
+  }
+
   function handleRTMEvent(message) {
     switch (message.type) {
     case 'message':
       handleP2PMessage(message)
       break
     case 'channel_message':
-      // TODO handleChannelMessage(message)
+      handleChannelMessage(message)
       break
     default:
     }
