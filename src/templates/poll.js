@@ -4,8 +4,7 @@ export const POLL_TEMPLATE = `**No: ___POLL_ID___**
 > **A:**
 > ___POLL_CHOICES___
 
-> ___POLL_TIPS___
-`
+> ___POLL_TIPS___`
 
 export const getPollTemplate = ({
   pollId,

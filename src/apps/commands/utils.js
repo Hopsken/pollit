@@ -7,7 +7,7 @@ function parsePollCmd(text) {
   try {
     return text.trim().slice(4)
       .trim()
-      .match(/["“][^"“”]+["”]/g)
+      .match(/["『“][^"“”『』]+["”』]/g)
       .map(one => one.slice(1, -1))
   } catch(err) {
     throw new Error('格式错误，请输入 `help` 查看使用说明。')

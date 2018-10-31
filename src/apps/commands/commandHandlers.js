@@ -1,4 +1,5 @@
 import {
+  HELP_DOC,
   INTRODUCTION_TEMPLATE,
 } from '../../templates'
 import {
@@ -29,8 +30,9 @@ const commandHandlers = {
 
   // 帮助
   help(options, reply) {
+    const [queryCmd] = options
     reply({
-      text: INTRODUCTION_TEMPLATE
+      text: HELP_DOC[queryCmd] || INTRODUCTION_TEMPLATE
     })
   },
 
@@ -173,7 +175,7 @@ const commandHandlers = {
     }
 
     const availableChoices = await getChoicesByPollId(pollId, ['text', 'id', 'index'])
-    const userChoice = (availableChoices || []).filter(one => one.index == choiceIndex)[0]
+    const userChoice = (availableChoices || []).filter(one => one.index == choiceIndex || one.text == choiceIndex)[0]
 
     if (!userChoice) {
       reply({
