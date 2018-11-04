@@ -34,6 +34,8 @@ export const NOTICE = {
 
   VOTED: '已经投过票啦~',
 
+  TOO_MANY_CHOICE: '本投票为单选啦，你选太多咯',
+
   RESULT_TIP: '请输入 `result 编号` 查看投票结果😉',
 
   RESULT_NOT_CREATOR: '只能查看自己发起的投票的结果哦😉',
@@ -42,5 +44,5 @@ export const NOTICE = {
 
   CLOSED: '投票已经被关闭啦~',
 
-  CLOSE_SUCCESS: '成功关闭投票 **No.$0 $1**，输入\`result $2\`查看结果吧~'
+  CLOSE_SUCCESS: '成功关闭投票 **No.$0 $1**，输入\`result $2\`查看结果吧~',
 }

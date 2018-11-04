@@ -33,10 +33,11 @@ export const parseCmd = text => {
   cmd = cmd.toLowerCase()
 
   try {
-    if (cmd === 'poll') {
+    if (cmd === 'poll' || cmd === 'multi') {
 
       if (rest[0] === '-a') {
-        cmd = 'pollAnonymous'
+        if (cmd === 'poll') cmd = 'pollAnonymous'
+        if (cmd === 'multi') cmd = 'multiAnonymous'
       }
 
       rest = parsePollCmd(text)

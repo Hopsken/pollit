@@ -8,13 +8,15 @@ export const createPoll = ({
   teamId,
   creatorId,
   text,
-  anonymous
+  anonymous,
+  multi
 } = {}) =>
   db.Poll.create({
     teamId,
     creatorId,
     text,
-    anonymous
+    anonymous,
+    multi
   })
 
 /*
@@ -58,6 +60,41 @@ export const getPoll = async (conditions, keys) => {
 }
 
 /*
+  * 创建多个 Answer
+*/
+
+export const createBulkAnswer = async ({
+  pollId,
+  userId,
+  choiceIds,
+  username
+}) => {
+
+  if (choiceIds && choiceIds.length === 1) {
+    return createAnswer({
+      pollId,
+      userId,
+      choiceId: choiceIds[0],
+      username
+    })
+  }
+
+  (choiceIds || []).map(async choiceId => await createAnswer({
+    pollId,
+    userId,
+    choiceId,
+    username
+  }).catch(() => null)
+  )
+
+  return db.Answer.findAll({
+    where: {
+      pollId,
+      userId
+    }
+  })
+}
+/*
   * 创建用户 Answer
 */
 export const createAnswer = ({
@@ -71,7 +108,7 @@ export const createAnswer = ({
   })
     .then(ans => {
       if (ans) {
-        throw new Error('Alreay exist.')
+        throw new Error('Aleady Exist.')
       } else {
         return db.Answer.create({
           pollId,

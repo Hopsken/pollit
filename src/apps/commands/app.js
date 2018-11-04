@@ -23,7 +23,13 @@ export const commands = async clients => {
     const handler = personalCommandHandlers[cmd]
 
     if (typeof handler === 'function') {
-      handler.call(message, options, reply, http)
+      try {
+        handler.call(message, options, reply, http)
+      } catch {
+        reply({
+          text: INTRODUCTION_TEMPLATE
+        })
+      }
     } else {
       reply({
         text: INTRODUCTION_TEMPLATE

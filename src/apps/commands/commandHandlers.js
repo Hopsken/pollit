@@ -6,8 +6,8 @@ import {
 import {
   getPoll,
   createPoll,
-  createAnswer,
   updatePollById,
+  createBulkAnswer,
   createBulkChoices,
   getStatsByPollId,
   getChoicesByPollId,
@@ -38,7 +38,7 @@ export const personalCommandHandlers = {
   },
 
   // 发起投票
-  poll(options, reply, http, anonymous = false) {
+  poll(options, reply, http, args = { anonymous: false, multi: 1 }) {
     const message = this
     const [title, ...choices] = options
 
@@ -56,7 +56,8 @@ export const personalCommandHandlers = {
         teamId: info.id,
         creatorId: message.uid,
         text: title,
-        anonymous,
+        anonymous: args.anonymous,
+        multi: args.multi
       }))
       .then(poll => {
         pollId = poll.get({ plain: true })['id']
@@ -65,10 +66,11 @@ export const personalCommandHandlers = {
       .then(() => reply({
         text: formatPoll({
           pollId,
+          multi: args.multi == 1 ? '单选' : '多选',
           title,
           choices: choices.map((one, index) => orderingChoice(one, index + 1)).join('\n'),
           tips: (
-            anonymous
+            args.anonymous
             ? NOTICE['CREATE_ANONY_POLL_SUCCESS']
             : NOTICE['CREATE_POLL_SUCCESS']
             ).replace('$0', pollId)
@@ -80,14 +82,24 @@ export const personalCommandHandlers = {
   },
 
   // 创建匿名投票
-  pollAnonymous(options, reply, http) {
-    try {
-      personalCommandHandlers['poll'].call(this, options, reply, http, true)
-    } catch {
-      reply({
-        text: NOTICE['ON_ERROR']
-      })
-    }
+  pollAnonymous(options, reply, http, args = { multi: 1 }) {
+    personalCommandHandlers['poll'].call(this, options, reply, http, {
+      anonymous: true,
+      multi: args.multi
+    })
+  },
+
+  multi(options, reply, http) {
+    personalCommandHandlers['poll'].call(this, options, reply, http, {
+      anonymous: false,
+      multi: 0
+    })
+  },
+
+  multiAnonymous(options, reply, http) {
+    personalCommandHandlers['pollAnonymous'].call(this, options, reply, http, {
+      multi: 0
+    })
   },
 
   // 发布投票
@@ -145,6 +157,7 @@ export const personalCommandHandlers = {
       vchannel_id: targetChannel.vchannel_id,
       text: formatPoll({
         pollId,
+        multi: currentPoll.multi == 1 ? '单选' : '多选',
         title: currentPoll.text,
         choices:  choices.map((one, index) => orderingChoice(one.text, index + 1)).join('\n'),
         tips: currentPoll.anonymous ? NOTICE['POLL_ANONY_TIP'] : ''
@@ -170,7 +183,7 @@ export const personalCommandHandlers = {
   // 用户投票
   async vote(options, reply, http) {
     const message = this
-    const [pollId, choiceIndex] = options
+    const [pollId, ...choiceIndex] = options
 
     const currentPoll = await getPoll({id: pollId}).catch(() => null)
     const currentUser = await http.user.info({ user_id: message.uid })
@@ -192,26 +205,39 @@ export const personalCommandHandlers = {
     }
 
     const availableChoices = await getChoicesByPollId(pollId, ['text', 'id', 'index'])
-    const userChoice = (availableChoices || []).filter(one => one.index == choiceIndex || one.text == choiceIndex)[0]
+    const userChoice = (availableChoices || []).filter(one => choiceIndex.includes(one.index.toString()) || choiceIndex.includes(one.text))
 
-    if (!userChoice) {
+    console.log('user', userChoice)
+    console.log('uava', availableChoices)
+    console.log('inpit', choiceIndex)
+
+    if (!userChoice.length) {
       reply({
         text: NOTICE['CHOICE_NOT_EXIST']
       })
       return
     }
 
-    createAnswer({
+    if (currentPoll.multi == 1 && userChoice.length > 1) {
+      reply({
+        text: NOTICE['TOO_MANY_CHOICE']
+      })
+      return
+    }
+
+
+    createBulkAnswer({
       pollId,
       userId: currentUser.id,
       username: currentUser.name,
-      choiceId: userChoice['id']
+      choiceIds: userChoice.map(one => one.id)
     })
-      .then(() => reply({
+      .then(() =>
+        reply({
         text: NOTICE['VOTE_SUCCESS']
           .replace('$0', currentPoll.id)
           .replace('$1', currentPoll.text)
-          .replace('$2', userChoice.text)
+          .replace('$2', userChoice.map(one => one.text).join(' '))
       }))
       .catch(() => {
         return Promise.reject(401)
@@ -224,6 +250,7 @@ export const personalCommandHandlers = {
           message_key: currentPoll.messageKey,
           text: formatPoll({
             pollId,
+            multi: currentPoll.multi == 1 ? '单选' : '多选',
             title: currentPoll.text,
             choices: formatChoices(detail, currentPoll.anonymous),
             tips: currentPoll.anonymous ? NOTICE['POLL_ANONY_TIP'] : ''
@@ -329,20 +356,29 @@ export const channelCommandHandlers = {
     if (!currentPoll) return
 
     const availableChoices = await getChoicesByPollId(currentPoll.id)
-    const userChoice = (availableChoices || []).filter(one => one.index == message.text.trim() || one.text == message.text.trim())[0]
+    const choicesFromText = message.text.trim().split(/\s+/)
+    const userChoice = (availableChoices || []).filter(one => choicesFromText.includes(one.index.toString()) || choicesFromText.includes(one.text))
 
-    if (!availableChoices || !userChoice) return
+    if (!availableChoices || !userChoice.length) return
 
     if (currentPoll.anonymous) {
-      reply({text: '这是匿名投票啊。哦豁，完蛋🤦‍♀️'})
+      reply({text: '这是匿名投票啊🤦‍'})
       return
     }
 
-    createAnswer({
+
+    if (currentPoll.multi == 1 && userChoice.length > 1) {
+      reply({
+        text: NOTICE['TOO_MANY_CHOICE']
+      })
+      return
+    }
+
+    createBulkAnswer({
       pollId: currentPoll.id,
       userId: message.uid,
       username: `@<=${message.uid}=>`,
-      choiceId: userChoice.id
+      choiceIds: userChoice.map(one => one.id)
     })
     .then(async () => {
       const { detail } = await getStatsByPollId(currentPoll.id)
@@ -352,6 +388,7 @@ export const channelCommandHandlers = {
         message_key: message.refer_key,
         text: formatPoll({
           pollId: currentPoll.id,
+          multi: currentPoll.multi == 1 ? '单选' : '多选',
           title: currentPoll.text,
           choices: formatChoices(detail, currentPoll.anonymous),
           tips: currentPoll.anonymous ? NOTICE['POLL_ANONY_TIP'] : ''

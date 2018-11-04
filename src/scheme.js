@@ -45,7 +45,14 @@ export const Poll = sequelize.define('poll', {
     type: Sequelize.BOOLEAN,
     defaultValue: false,
     allowNull: false
-  }
+  },
+
+  // 是否允许多选，1 为单选，0 为无限制
+  multi: {
+    type: Sequelize.INTEGER,
+    defaultValue: 1,
+    allowNull: false
+  },
 
 }, {
   timestamps: true
