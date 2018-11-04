@@ -112,7 +112,7 @@ export const formatResultsAttachments = (stats, anonymous = false) => {
       const progress = '◻️'.repeat(Math.round(percent/10))
       const numberOfPeople = users.length ? `(${users.length})` : ''
 
-      statsText += `${progress} ${percent}% ${numberOfPeople} \n`
+      statsText += `${progress} ${percent.toFixed(1)}% ${numberOfPeople} \n`
       if (!anonymous) {
         statsText += users.map(userId => `@<=${userId}=>`).join(' ') + '\n'
       }

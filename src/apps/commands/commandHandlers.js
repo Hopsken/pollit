@@ -259,13 +259,13 @@ export const personalCommandHandlers = {
     const poll = await getPoll({id: pollId}).catch(() => null)
 
     // 判断是否为本人发起的投票
-    if (!poll || message.uid !== poll.creatorId) {
-      reply({
-        text: NOTICE['RESULT_NOT_CREATOR']
-      })
+    // if (!poll || message.uid !== poll.creatorId) {
+    //   reply({
+    //     text: NOTICE['RESULT_NOT_CREATOR']
+    //   })
 
-      return
-    }
+    //   return
+    // }
 
     reply({
       text: `**No.${pollId} ${poll.text}**`,
