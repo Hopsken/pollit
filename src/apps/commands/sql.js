@@ -67,7 +67,6 @@ export const createBulkAnswer = async ({
   pollId,
   userId,
   choiceIds,
-  username
 }) => {
 
   if (choiceIds && choiceIds.length === 1) {
@@ -75,7 +74,6 @@ export const createBulkAnswer = async ({
       pollId,
       userId,
       choiceId: choiceIds[0],
-      username
     })
   }
 
@@ -83,7 +81,6 @@ export const createBulkAnswer = async ({
     pollId,
     userId,
     choiceId,
-    username
   }).catch(() => null)
   )
 
@@ -98,7 +95,7 @@ export const createBulkAnswer = async ({
   * 创建用户 Answer
 */
 export const createAnswer = ({
-  pollId, userId, choiceId, username
+  pollId, userId, choiceId
 } = {}) => {
   return db.Answer.findOne({
     where: {
@@ -114,7 +111,6 @@ export const createAnswer = ({
           pollId,
           userId,
           choiceId,
-          username
         })
       }
     })

@@ -207,10 +207,6 @@ export const personalCommandHandlers = {
     const availableChoices = await getChoicesByPollId(pollId, ['text', 'id', 'index'])
     const userChoice = (availableChoices || []).filter(one => choiceIndex.includes(one.index.toString()) || choiceIndex.includes(one.text))
 
-    console.log('user', userChoice)
-    console.log('uava', availableChoices)
-    console.log('inpit', choiceIndex)
-
     if (!userChoice.length) {
       reply({
         text: NOTICE['CHOICE_NOT_EXIST']
@@ -229,7 +225,6 @@ export const personalCommandHandlers = {
     createBulkAnswer({
       pollId,
       userId: currentUser.id,
-      username: currentUser.name,
       choiceIds: userChoice.map(one => one.id)
     })
       .then(() =>
@@ -377,7 +372,6 @@ export const channelCommandHandlers = {
     createBulkAnswer({
       pollId: currentPoll.id,
       userId: message.uid,
-      username: `@<=${message.uid}=>`,
       choiceIds: userChoice.map(one => one.id)
     })
     .then(async () => {

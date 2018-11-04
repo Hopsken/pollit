@@ -81,11 +81,6 @@ export const Answer = sequelize.define('answer', {
     allowNull: false,
   },
 
-  username: {
-    type: Sequelize.STRING,
-    allowNull: false,
-  }
-
 }, {
   timestamps: true
 })
