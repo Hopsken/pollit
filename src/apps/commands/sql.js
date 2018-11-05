@@ -69,15 +69,18 @@ export const createBulkAnswer = async ({
   choiceIds,
 }) => {
 
-  if (choiceIds && choiceIds.length === 1) {
-    return createAnswer({
+  const exists = await db.Answer.findOne({
+    where: {
       pollId,
-      userId,
-      choiceId: choiceIds[0],
-    })
+      userId
+    }
+  })
+
+  if (exists) {
+    throw new Error(401)
   }
 
-  (choiceIds || []).map(async choiceId => await createAnswer({
+  ;(choiceIds || []).map(async choiceId => await createAnswer({
     pollId,
     userId,
     choiceId,
